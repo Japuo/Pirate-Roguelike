@@ -1,99 +1,135 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using Random = UnityEngine.Random;
+using UnityEngine.Tilemaps;
 
 public class DungeonGenerator : MonoBehaviour
 {
-    [Serializable]
-    public class Count
-    {
-        public int minimum;
-        public int maximum;
+    public int numberOfRooms;
+    private Room[,] rooms;
+    private Room currentRoom;
+    private static DungeonGenerator instance = null;
 
-        public Count (int min, int max)
+    void Awake()
+    {
+        if (instance == null)
         {
-            minimum = min;
-            maximum = max;
+            DontDestroyOnLoad(this.gameObject);
+            instance = this;
+            this.currentRoom = GenerateDungeon();
+        }
+        else
+        {
+            string roomPrefabName = instance.currentRoom.PrefabName();
+            GameObject roomObject = (GameObject)Instantiate(Resources.Load(roomPrefabName));
+            Destroy(this.gameObject);
         }
     }
 
-    public int columns = 8;
-    public int rows = 8;
-    public Count wallCount = new Count(5, 9);
-    public GameObject exit;
-    public GameObject[] floorTiles;
-    public GameObject[] wallTiles;
-    public GameObject[] outerWallTiles;
-
-    private Transform boardHolder;
-    private List<Vector3> gridPositions = new List<Vector3>();
-
-    void InitialiseList()
+    void Start()
     {
-        gridPositions.Clear();
-
-        for (int x = 1; x < columns - 1; x++)
-        {
-            for (int y = 1; y < rows - 1; y++)
-            {
-                gridPositions.Add(new Vector3(x, y, 0f));
-            }
-        }
+        this.currentRoom = GenerateDungeon();
+        string roomPrefabName = this.currentRoom.PrefabName();
+        GameObject roomObject = (GameObject)Instantiate(Resources.Load(roomPrefabName));
     }
 
-    void BoardSetup()
+    private Room GenerateDungeon()
     {
-        boardHolder = new GameObject("Board").transform;
+        int gridSize = 3 * numberOfRooms;
+        rooms = new Room[gridSize, gridSize];
+        Vector2Int initialRoomCoordinate = new Vector2Int((gridSize / 2) - 1, (gridSize / 2) - 1);
+        Queue<Room> roomsToCreate = new Queue<Room>();
 
-        for (int x = -1; x < columns + 1; x++)
+        roomsToCreate.Enqueue(new Room(initialRoomCoordinate.x, initialRoomCoordinate.y));
+        List<Room> createdRooms = new List<Room>();
+
+        while(roomsToCreate.Count > 0 && createdRooms.Count < numberOfRooms)
         {
-            for (int y = -1; y < rows + 1; y++)
+            Room currentRoom = roomsToCreate.Dequeue();
+            rooms[currentRoom.roomCoordinate.x, currentRoom.roomCoordinate.y] = currentRoom;
+            createdRooms.Add(currentRoom);
+            AddNeighbours(currentRoom, roomsToCreate);
+        }
+
+        foreach(Room room in createdRooms)
+        {
+            List<Vector2Int> neighbourCoordinates = room.NeighbourCoordinates();
+            foreach(Vector2Int coordinate in neighbourCoordinates)
             {
-                GameObject toInstantiate = floorTiles[Random.Range(0, floorTiles.Length)];
-                if(x == -1 || x == columns || y == -1 || y == rows)
+                Room neighbour = rooms[coordinate.x, coordinate.y];
+                if(neighbour != null)
                 {
-                    toInstantiate = outerWallTiles[Random.Range(0, outerWallTiles.Length)];
+                    room.Connect(neighbour);
                 }
-
-                GameObject instance = Instantiate(toInstantiate, new Vector3(x, y, 0f), Quaternion.identity) as GameObject;
-
-                instance.transform.SetParent(boardHolder);
             }
         }
+
+        return this.rooms[initialRoomCoordinate.x, initialRoomCoordinate.y];
     }
 
-    Vector3 RandomPosition()
+    private void AddNeighbours(Room currentRoom, Queue<Room> roomsToCreate)
     {
-        int randomIndex = Random.Range(0, gridPositions.Count);
-        Vector3 randomPosition = gridPositions[randomIndex];
-        gridPositions.RemoveAt(randomIndex);
+        List<Vector2Int> neighbourCoordinates = currentRoom.NeighbourCoordinates();
+        List<Vector2Int> availableNeighbours = new List<Vector2Int>();
 
-        return randomPosition;
-    }
-
-    void LayoutObjectAtRandom(GameObject[] tileArray, int minimum, int maximum)
-    {
-        int objectCount = Random.Range(minimum, maximum + 1);
-        for (int i = 0; i < objectCount; i++)
+        foreach(Vector2Int coordinate in neighbourCoordinates)
         {
-            Vector3 randomPosition = RandomPosition();
-            GameObject tileChoice = tileArray[Random.Range(0, tileArray.Length)];
-            Instantiate(tileChoice, randomPosition, Quaternion.identity);
+            if(this.rooms[coordinate.x, coordinate.y] == null)
+            {
+                availableNeighbours.Add(coordinate);
+            }
+        }
+
+        int numberOfNeighbours = (int)Random.Range(1, availableNeighbours.Count);
+
+        for(int neighbourIndex = 0; neighbourIndex < numberOfNeighbours; neighbourIndex++)
+        {
+            float randomNumber = Random.value;
+            float roomFrac = 1f / (float)availableNeighbours.Count;
+            Vector2Int chosenNeighbour = new Vector2Int(0, 0);
+
+            foreach(Vector2Int coordinate in availableNeighbours)
+            {
+                if(randomNumber < roomFrac) 
+                {
+                    chosenNeighbour = coordinate;
+                    break;
+                } else
+                {
+                    roomFrac += 1f / (float)availableNeighbours.Count;
+                }
+            }
+            roomsToCreate.Enqueue(new Room(chosenNeighbour));
+            availableNeighbours.Remove(chosenNeighbour);
         }
     }
 
-    public void SetupScene(int level)
+    public void MoveToRoom(Room room)
     {
-        BoardSetup();
-        InitialiseList();
-        LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum);
-        Instantiate(exit, new Vector3(columns - 1, rows - 1, 0f), Quaternion.identity);
+        this.currentRoom = room;
+    }
+    public Room CurrentRoom()
+    {
+        return this.currentRoom;
     }
 
-    private void Start()
+    private void PrintGrid()
     {
-        SetupScene(1);
+        for (int rowIndex = 0; rowIndex < this.rooms.GetLength(1); rowIndex++)
+        {
+            string row = "";
+            for (int columnIndex = 0; columnIndex < this.rooms.GetLength(0); columnIndex++)
+            {
+                if (this.rooms[columnIndex, rowIndex] == null)
+                {
+                    row += "X";
+                }
+                else
+                {
+                    row += "R";
+                }
+            }
+            Debug.Log(row);
+        }
     }
 }

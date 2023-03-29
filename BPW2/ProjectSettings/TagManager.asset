@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Dungeon
   layers:
   - Default
   - TransparentFX
@@ -40,13 +41,4 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
-    locked: 0
-  - name: Floor
-    uniqueID: 2345986017
-    locked: 0
-  - name: Exit
-    uniqueID: 14978351
-    locked: 0
-  - name: Wall
-    uniqueID: 110457183
     locked: 0
