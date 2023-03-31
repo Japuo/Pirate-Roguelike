@@ -8,6 +8,8 @@ public class CrossBridge : MonoBehaviour
     [SerializeField]
     string direction;
 
+    public GameObject oppositeEntrance;
+
     void OnCollisionEnter2D(Collision2D other)
     {
         if (other.gameObject.tag == "Player")
@@ -16,8 +18,9 @@ public class CrossBridge : MonoBehaviour
             DungeonGenerator dungeonGeneration = dungeon.GetComponent<DungeonGenerator>();
             Room room = dungeonGeneration.CurrentRoom();
 
-            dungeonGeneration.MoveToRoom(room.Neighbour(this.direction));
-            SceneManager.LoadScene("Stage1");
+            dungeonGeneration.MoveToRoom(room.Neighbour(direction));
+            other.transform.position = oppositeEntrance.transform.position;
+            GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>().LoadScene("Stage1");
         }
     }
 }

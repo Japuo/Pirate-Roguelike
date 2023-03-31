@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 966354796923105396}
   - component: {fileID: 2451109841283668784}
   - component: {fileID: 5185015784123397112}
+  - component: {fileID: 6433984224857476238}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -75,7 +76,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: a38990c7d9610b24bba82d879cc27354, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -146,4 +147,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a542f4257fcffa4faf60431693449c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 0
+  moveTime: 0.1
+  blockingLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  bombPrefab: {fileID: 0}
+  playerStats: {fileID: 0}
+  activeBombs: []
+--- !u!114 &6433984224857476238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6332446183112010297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23a32d56a0273d744b4f5ef2861cef0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentHealth: 5
+  maxHealth: 5
+  bombCount: 10
+  goldCount: 0

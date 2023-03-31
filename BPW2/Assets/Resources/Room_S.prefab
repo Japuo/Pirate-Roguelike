@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5807186024485601792}
   - component: {fileID: 5501141378007992854}
   - component: {fileID: 1448392976781985093}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tilemap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -132,7 +132,7 @@ Tilemap:
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
-      m_AllTileFlags: 1073741825
+      m_AllTileFlags: 1
   - first: {x: 0, y: -5, z: 0}
     second:
       serializedVersion: 2
@@ -1979,7 +1979,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5537868470665052344}
   - component: {fileID: 3084873578236174207}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Room_S
   m_TagString: Untagged
   m_Icon: {fileID: 0}

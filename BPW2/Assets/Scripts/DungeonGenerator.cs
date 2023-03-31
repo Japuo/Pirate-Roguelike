@@ -6,6 +6,21 @@ using UnityEngine.Tilemaps;
 public class DungeonGenerator : MonoBehaviour
 {
     public int numberOfRooms;
+    public Tilemap CollisionMap;
+
+    [SerializeField]
+    private GameObject goalPrefab;
+    [SerializeField]
+    private TileBase obstacleTile;
+    [SerializeField]
+    private int numberOfObstacles;
+    [SerializeField]
+    private Vector2Int[] possibleObstacleSizes;
+    [SerializeField]
+    private int numberOfEnemies;
+    [SerializeField]
+    private GameObject[] possibleEnemies;
+
     private Room[,] rooms;
     private Room currentRoom;
     private static DungeonGenerator instance = null;
@@ -14,23 +29,27 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (instance == null)
         {
-            DontDestroyOnLoad(this.gameObject);
+            DontDestroyOnLoad(gameObject);
             instance = this;
-            this.currentRoom = GenerateDungeon();
+            currentRoom = GenerateDungeon();
         }
         else
         {
             string roomPrefabName = instance.currentRoom.PrefabName();
             GameObject roomObject = (GameObject)Instantiate(Resources.Load(roomPrefabName));
-            Destroy(this.gameObject);
+            Tilemap tilemap = roomObject.GetComponentInChildren<Tilemap>();
+
+            instance.currentRoom.AddPopulationToTilemap(CollisionMap, instance.obstacleTile);
+            Destroy(gameObject);
         }
     }
 
     void Start()
     {
-        this.currentRoom = GenerateDungeon();
-        string roomPrefabName = this.currentRoom.PrefabName();
+        string roomPrefabName = currentRoom.PrefabName();
         GameObject roomObject = (GameObject)Instantiate(Resources.Load(roomPrefabName));
+        Tilemap tilemap = roomObject.GetComponentInChildren<Tilemap>();
+        currentRoom.AddPopulationToTilemap(CollisionMap, obstacleTile);
     }
 
     private Room GenerateDungeon()
@@ -51,7 +70,10 @@ public class DungeonGenerator : MonoBehaviour
             AddNeighbours(currentRoom, roomsToCreate);
         }
 
-        foreach(Room room in createdRooms)
+        int maximumDistanceToInitialRoom = 0;
+        Room finalRoom = null;
+
+        foreach (Room room in createdRooms)
         {
             List<Vector2Int> neighbourCoordinates = room.NeighbourCoordinates();
             foreach(Vector2Int coordinate in neighbourCoordinates)
@@ -62,9 +84,25 @@ public class DungeonGenerator : MonoBehaviour
                     room.Connect(neighbour);
                 }
             }
+            room.PopulateObstacles(numberOfObstacles, possibleObstacleSizes);
+            room.PopulatePrefabs(numberOfEnemies, possibleEnemies);
+
+            int distanceToInitialRoom = Mathf.Abs(room.roomCoordinate.x - initialRoomCoordinate.x) + Mathf.Abs(room.roomCoordinate.y - initialRoomCoordinate.y);
+            if (distanceToInitialRoom > maximumDistanceToInitialRoom)
+            {
+                maximumDistanceToInitialRoom = distanceToInitialRoom;
+                finalRoom = room;
+            }
         }
+        GameObject[] goalPrefabs = { goalPrefab };
+        finalRoom.PopulatePrefabs(1, goalPrefabs);
 
         return this.rooms[initialRoomCoordinate.x, initialRoomCoordinate.y];
+    }
+
+    public void ResetDungeon()
+    {
+        currentRoom = GenerateDungeon();
     }
 
     private void AddNeighbours(Room currentRoom, Queue<Room> roomsToCreate)
@@ -74,7 +112,7 @@ public class DungeonGenerator : MonoBehaviour
 
         foreach(Vector2Int coordinate in neighbourCoordinates)
         {
-            if(this.rooms[coordinate.x, coordinate.y] == null)
+            if(rooms[coordinate.x, coordinate.y] == null)
             {
                 availableNeighbours.Add(coordinate);
             }
@@ -106,30 +144,10 @@ public class DungeonGenerator : MonoBehaviour
 
     public void MoveToRoom(Room room)
     {
-        this.currentRoom = room;
+        currentRoom = room;
     }
     public Room CurrentRoom()
     {
-        return this.currentRoom;
-    }
-
-    private void PrintGrid()
-    {
-        for (int rowIndex = 0; rowIndex < this.rooms.GetLength(1); rowIndex++)
-        {
-            string row = "";
-            for (int columnIndex = 0; columnIndex < this.rooms.GetLength(0); columnIndex++)
-            {
-                if (this.rooms[columnIndex, rowIndex] == null)
-                {
-                    row += "X";
-                }
-                else
-                {
-                    row += "R";
-                }
-            }
-            Debug.Log(row);
-        }
+        return currentRoom;
     }
 }
